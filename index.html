@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>WAVE 主播回放</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <style>
+        img {
+            width: 120px;
+            height: 120px;
+        }
+    </style>
+</head>
+<body class="container mt-4">
+
+    <h1>WAVE 主播回放</h1>
+    <a href="https://forms.gle/FEEyQhybq4XWgMMp9" target="_blank">Google 表單建議</a>
+    <br>
+    <a>此服務為付費伺服器佈署於美國，30 分鐘未連接時會自動休眠，喚醒需要 10~20 秒，連上請耐心等候喚醒</a>
+    <br/>
+    <a href="waveGifts.html">
+        <button type="button" class="btn btn-success">禮物</button>
+    </a>
+    <a href="waveLove.html">
+        <button type="button" class="btn btn-danger">直播</button>
+    </a>
+    <br/>
+    <form id="searchForm">
+        <div class="form-row">
+            <div class="form-group col-4">
+                <input class="form-control" name="name" placeholder="請輸入主播名，需完全正確才能查看">
+            </div>
+            <div class="form-group col-1">
+                <button class="btn btn-dark" type="submit">查詢</button>
+            </div>
+        </div>
+    </form>
+    <table class="table table-hover" id="fileTable">
+        <thead>
+            <tr>
+                <th>時間</th>
+                <th>主播</th>
+                <th>標題</th>
+                <th>回放</th>
+                <th>音檔</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+    async function fetchPlayData(name) {
+        let cursor = '';
+        let result = [];
+
+        try {
+            // 獲取用戶 ID
+            const userResponse = await fetch(`https://api.wave.com.tw/api/v1/users?q=${name}`);
+            const userRaw = await userResponse.text();
+            const userData = JSON.parse(userRaw).data;
+
+            if (!userData || userData.length === 0) {
+                return []; // 如果找不到用戶，返回空數組
+            }
+
+            let authorId = null;
+            for (const user of userData) {
+                if (user.name === name) {
+                    authorId = user.id;
+                    break;
+                }
+            }
+
+            if (!authorId) {
+                return []; // 如果找不到匹配的用戶名，返回空數組
+            }
+
+            // 獲取播放列表
+            while (true) {
+                const playResponse = await fetch(`https://api.wave.com.tw/api/v1/plays?author_id=${authorId}&cursor=${cursor}`);
+                const playRaw = await playResponse.text();
+                const playData = JSON.parse(playRaw);
+                const playList = playData.data;
+
+                if (!playList || playList.length === 0) break;
+
+                playList.forEach(play => {
+                    const userTime = new Date(play.created_at * 1000).toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                    result.push({
+                        userTime: userTime,
+                        title: play.title,
+                        name: name,
+                        wavePlay: `https://wave.com.tw/plays/${play.id}`,
+                        data: play.url
+                    });
+                });
+
+                cursor = playData.cursor;
+                if (!cursor) break;
+            }
+        } catch (error) {
+            console.error("Error fetching data:", error);
+            return []; // 發生錯誤時返回空數組，避免程式崩潰
+        }
+        return result;
+    }
+
+    function displayPlayData(files) {
+        const fileTableBody = document.querySelector("#fileTable tbody");
+        fileTableBody.innerHTML = ''; // 清空表格
+
+        if (files && files.length > 0) {
+            files.forEach(file => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${file.userTime}</td>
+                    <td>${file.name}</td>
+                    <td>${file.title}</td>
+                    <td><a href="${file.wavePlay}" target="_blank">音檔</a></td>
+                    <td>
+                        <audio controls preload="none">
+                            <source src='${file.data}' type="audio/mpeg">
+                            您的瀏覽器不支持音頻元素
+                        </audio>
+                    </td>
+                `;
+                fileTableBody.appendChild(row);
+            });
+        } else {
+            fileTableBody.innerHTML = `<tr><td colspan="5" class="text-center">查無資料，請確認主播名稱是否正確</td></tr>`;
+        }
+    }
+
+    document.getElementById('searchForm').addEventListener('submit', async (event) => {
+        event.preventDefault(); // 阻止表單默認提交行為
+        const name = document.querySelector('input[name="name"]').value.trim();
+        if (!name) {
+            alert("請輸入主播名稱");
+            return;
+        }
+
+        const files = await fetchPlayData(name);
+        displayPlayData(files);
+    });
+    </script>
+</body>
+</html>
