@@ -1,147 +1,1051 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <title>WAVE 主播回放</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
-    <style>
-        img {
-            width: 120px;
-            height: 120px;
-        }
-    </style>
-</head>
-<body class="container mt-4">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WAVE 主播 Live & 回放</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-    <h1>WAVE 主播回放</h1>
-    <a href="https://forms.gle/FEEyQhybq4XWgMMp9" target="_blank">Google 表單建議</a>
-    <br>
-    <a href="waveGifts.html">
-        <button type="button" class="btn btn-success">禮物</button>
-    </a>
-    <a href="waveLove.html">
-        <button type="button" class="btn btn-danger">直播</button>
-    </a>
-    <br/>
-    <form id="searchForm">
-        <div class="form-row">
-            <div class="form-group col-4">
-                <input class="form-control" name="name" placeholder="請輸入主播名，需完全正確才能查看">
-            </div>
-            <div class="form-group col-1">
-                <button class="btn btn-dark" type="submit">查詢</button>
-            </div>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1a1a2e;
+      min-height: 100vh;
+      color: white;
+      overflow-x: hidden;
+    }
+
+    .main-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* 左側面板 - 回放頁面 */
+    .left-panel {
+      width: 50%;
+      background: #1a1a2e;
+      overflow-y: auto;
+      transition: width 0.3s ease;
+    }
+
+    /* 右側面板 - 播放器 */
+    .right-panel {
+      width: 50%;
+      background: #16213e;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      transition: width 0.3s ease;
+    }
+
+    /* 左側回放頁面樣式 */
+    .replay-container {
+      padding: 20px;
+    }
+
+    .replay-header {
+      background: #2d2d4a;
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .replay-header h1 {
+      font-size: 2rem;
+      color: white;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9rem;
+    }
+
+    .nav-btn.success {
+      background: linear-gradient(45deg, #00b894, #00a085);
+      color: white;
+    }
+
+    .nav-btn.danger {
+      background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+      color: white;
+    }
+
+    .nav-btn.link {
+      background: linear-gradient(45deg, #4834d4, #686de0);
+      color: white;
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      text-decoration: none;
+      color: white;
+    }
+
+    .search-form {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .search-input {
+      flex: 1;
+    }
+
+    .search-input label {
+      display: block;
+      margin-bottom: 8px;
+      color: rgba(255,255,255,0.9);
+      font-weight: 500;
+    }
+
+    .search-input input {
+      width: 100%;
+      padding: 10px 15px;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      font-size: 0.9rem;
+    }
+
+    .search-input input::placeholder {
+      color: rgba(255,255,255,0.6);
+    }
+
+    .search-input input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+    }
+
+    .search-btn {
+      padding: 10px 20px;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .search-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .table-container {
+      background: #2d2d4a;
+      border-radius: 15px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 420px); /* 固定高度，扣除頂部元素的高度 */
+      min-height: 400px;
+    }
+
+    .table {
+      width: 100%;
+      margin: 0;
+      color: white;
+      border-collapse: collapse;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .table thead {
+      background: rgba(255,255,255,0.1);
+      flex-shrink: 0; /* 防止表頭被壓縮 */
+    }
+
+    .table thead tr {
+      display: flex;
+      width: 100%;
+    }
+
+    .table tbody {
+      flex: 1;
+      overflow-y: auto;
+      display: block;
+    }
+
+    .table tbody tr {
+      display: flex;
+      width: 100%;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .table tbody tr:hover {
+      background: rgba(255,255,255,0.05);
+    }
+
+    .table th {
+      padding: 15px 12px;
+      font-weight: 600;
+      border: none;
+      color: white;
+      font-size: 0.9rem;
+      text-align: left;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .table th:first-child {
+      width: 15%;
+    }
+
+    .table th:nth-child(2) {
+      width: 15%;
+    }
+
+    .table th:nth-child(3) {
+      width: 35%;
+    }
+
+    .table th:nth-child(4) {
+      width: 15%;
+      text-align: center;
+    }
+
+    .table th:nth-child(5) {
+      width: 20%;
+      text-align: center;
+    }
+
+    .table td {
+      padding: 12px;
+      vertical-align: middle;
+      font-size: 0.85rem;
+      text-align: left;
+      flex-shrink: 0;
+    }
+
+    .table td:first-child {
+      width: 15%;
+    }
+
+    .table td:nth-child(2) {
+      width: 15%;
+    }
+
+    .table td:nth-child(3) {
+      width: 35%;
+      word-break: break-word;
+    }
+
+    .table td:nth-child(4) {
+      width: 15%;
+      text-align: center;
+    }
+
+    .table td:nth-child(5) {
+      width: 20%;
+      text-align: center;
+    }
+
+    /* 自定義滾動條樣式 */
+    .table tbody::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .table tbody::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+    }
+
+    .table tbody::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.3);
+      border-radius: 4px;
+    }
+
+    .table tbody::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.5);
+    }
+
+    .table a {
+      color: #74b9ff;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .table a:hover {
+      color: #0984e3;
+      text-decoration: underline;
+    }
+
+    .table audio {
+      width: 100%;
+      max-width: 200px;
+      height: 30px;
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 40px;
+      color: rgba(255,255,255,0.6);
+      width: 100% !important;
+      display: flex !important;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .no-data i {
+      font-size: 3rem;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+
+    .no-data h4 {
+      margin: 10px 0 5px 0;
+      color: rgba(255,255,255,0.8);
+      font-size: 1.1rem;
+    }
+
+    .no-data p {
+      margin: 0;
+      color: rgba(255,255,255,0.6);
+      font-size: 0.9rem;
+    }
+
+    /* 右側播放器區域樣式 */
+    .player-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .welcome-message {
+      color: rgba(255,255,255,0.7);
+    }
+
+    .welcome-message i {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+
+    .audio-player-container {
+      width: 100%;
+      height: calc(100% - 60px);
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .audio-preview {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255,255,255,0.2);
+      text-align: center;
+    }
+
+    .audio-preview i {
+      font-size: 4rem;
+      color: #74b9ff;
+      margin-bottom: 20px;
+    }
+
+    .audio-info h3 {
+      color: white;
+      margin-bottom: 10px;
+      font-size: 1.3rem;
+    }
+
+    .audio-info p {
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 20px;
+    }
+
+    .audio-player {
+      width: 100%;
+      margin: 20px 0;
+    }
+
+    .audio-controls {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .audio-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 25px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .audio-btn.primary {
+      background: linear-gradient(45deg, #74b9ff, #0984e3);
+      color: white;
+    }
+
+    .audio-btn.secondary {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .audio-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+
+    .player-header {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      padding: 15px;
+      border-radius: 10px 10px 0 0;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+
+    .close-btn {
+      background: #ff4757;
+      border: none;
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .close-btn:hover {
+      background: #ff3838;
+      transform: scale(1.1);
+    }
+
+    /* 響應式設計 */
+    @media (max-width: 768px) {
+      .main-container {
+        flex-direction: column;
+      }
+      
+      .left-panel, .right-panel {
+        width: 100%;
+        height: 50vh;
+      }
+      
+      .replay-header h1 {
+        font-size: 1.5rem;
+      }
+      
+      .nav-buttons {
+        flex-direction: column;
+      }
+      
+      .search-row {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .table-container {
+        overflow-x: auto;
+      }
+    }
+
+    /* Toast 通知 */
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #00b894;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 25px;
+      z-index: 1000;
+      animation: fadeInOut 3s ease-in-out;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    /* 下載進度條樣式 */
+    .download-progress {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      background: rgba(45, 45, 74, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 20px;
+      min-width: 300px;
+      z-index: 1001;
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      animation: slideInRight 0.3s ease-out;
+    }
+
+    .download-progress h4 {
+      color: white;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .download-progress .file-name {
+      color: rgba(255,255,255,0.8);
+      font-size: 0.8rem;
+      margin-bottom: 15px;
+      word-break: break-all;
+    }
+
+    .progress-bar-container {
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      height: 8px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .progress-bar {
+      background: linear-gradient(45deg, #00b894, #00a085);
+      height: 100%;
+      width: 0%;
+      border-radius: 10px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      display: flex;
+      justify-content: space-between;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.75rem;
+    }
+
+    .download-controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .download-controls button {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .cancel-btn {
+      background: #ff4757;
+      color: white;
+    }
+
+    .cancel-btn:hover {
+      background: #ff3838;
+    }
+
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(100%);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateY(-20px); }
+      20%, 80% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-20px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <!-- 左側面板 - 回放頁面 -->
+    <div class="left-panel">
+      <div class="replay-container">
+        <div class="replay-header">
+          <h1><i class="fas fa-history"></i> WAVE 主播回放</h1>
+          
+          <div class="nav-buttons">
+            <a href="https://forms.gle/FEEyQhybq4XWgMMp9" target="_blank" class="nav-btn link">
+              <i class="fas fa-external-link-alt"></i> Google 表單建議
+            </a>
+            <a href="waveGifts.html" class="nav-btn success">
+              <i class="fas fa-gift"></i> 禮物
+            </a>
+            <a href="waveLove.html" class="nav-btn danger">
+              <i class="fas fa-broadcast-tower"></i> 直播
+            </a>
+          </div>
         </div>
-    </form>
-    <table class="table table-hover" id="fileTable">
-        <thead>
-            <tr>
+
+        <div class="search-form">
+          <form id="searchForm">
+            <div class="search-row">
+              <div class="search-input">
+                <label for="streamerName">主播名稱</label>
+                <input type="text" id="streamerName" name="name" placeholder="請輸入主播名，需完全正確才能查看">
+              </div>
+              <button type="submit" class="search-btn">
+                <i class="fas fa-search"></i> 查詢
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="table-container">
+          <table class="table" id="fileTable">
+            <thead>
+              <tr>
                 <th>時間</th>
                 <th>主播</th>
                 <th>標題</th>
-                <th>回放</th>
-                <th>音檔</th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
+                <th>下載</th>
+                <th>播放</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="5" class="no-data">
+                  <i class="fas fa-search"></i>
+                  <div style="white-space: nowrap;">
+                    <h4>請輸入主播名稱進行查詢</h4>
+                    <p>輸入完整的主播名稱以查看回放記錄</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-    <script>
+    <!-- 右側面板 - 播放器 -->
+    <div class="right-panel">
+      <div class="player-container" id="playerContainer">
+        <div class="welcome-message">
+          <i class="fas fa-headphones"></i>
+          <h3>選擇音檔開始播放</h3>
+          <p>點擊左側表格中的音檔控制器開始播放</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentAudio = null;
+
     async function fetchPlayData(name) {
-        let cursor = '';
-        let result = [];
+      let cursor = '';
+      let result = [];
 
-        try {
-            // 獲取用戶 ID
-            const userResponse = await fetch(`https://api.wave.com.tw/api/v1/users?q=${name}`);
-            const userRaw = await userResponse.text();
-            const userData = JSON.parse(userRaw).data;
+      try {
+        // 獲取用戶 ID
+        const userResponse = await fetch(`https://api.wave.com.tw/api/v1/users?q=${name}`);
+        const userRaw = await userResponse.text();
+        const userData = JSON.parse(userRaw).data;
 
-            if (!userData || userData.length === 0) {
-                return []; // 如果找不到用戶，返回空數組
-            }
-
-            let authorId = null;
-            for (const user of userData) {
-                if (user.name === name) {
-                    authorId = user.id;
-                    break;
-                }
-            }
-
-            if (!authorId) {
-                return []; // 如果找不到匹配的用戶名，返回空數組
-            }
-
-            // 獲取播放列表
-            while (true) {
-                const playResponse = await fetch(`https://api.wave.com.tw/api/v1/plays?author_id=${authorId}&cursor=${cursor}`);
-                const playRaw = await playResponse.text();
-                const playData = JSON.parse(playRaw);
-                const playList = playData.data;
-
-                if (!playList || playList.length === 0) break;
-
-                playList.forEach(play => {
-                    const userTime = new Date(play.created_at * 1000).toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
-                    result.push({
-                        userTime: userTime,
-                        title: play.title,
-                        name: name,
-                        wavePlay: `https://wave.com.tw/plays/${play.id}`,
-                        data: play.url
-                    });
-                });
-
-                cursor = playData.cursor;
-                if (!cursor) break;
-            }
-        } catch (error) {
-            console.error("Error fetching data:", error);
-            return []; // 發生錯誤時返回空數組，避免程式崩潰
+        if (!userData || userData.length === 0) {
+          return []; // 如果找不到用戶，返回空數組
         }
-        return result;
+
+        let authorId = null;
+        for (const user of userData) {
+          if (user.name === name) {
+            authorId = user.id;
+            break;
+          }
+        }
+
+        if (!authorId) {
+          return []; // 如果找不到匹配的用戶名，返回空數組
+        }
+
+        // 獲取播放列表
+        while (true) {
+          const playResponse = await fetch(`https://api.wave.com.tw/api/v1/plays?author_id=${authorId}&cursor=${cursor}`);
+          const playRaw = await playResponse.text();
+          const playData = JSON.parse(playRaw);
+          const playList = playData.data;
+
+          if (!playList || playList.length === 0) break;
+
+          playList.forEach(play => {
+            const userTime = new Date(play.created_at * 1000).toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            result.push({
+              userTime: userTime,
+              title: play.title,
+              name: name,
+              wavePlay: `https://wave.com.tw/plays/${play.id}`,
+              data: play.url
+            });
+          });
+
+          cursor = playData.cursor;
+          if (!cursor) break;
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        return []; // 發生錯誤時返回空數組，避免程式崩潰
+      }
+      return result;
+    }
+
+    function playAudioInRightPanel(audioData) {
+      const playerContainer = document.getElementById('playerContainer');
+      
+      playerContainer.innerHTML = `
+        <div class="player-header">
+          <div>
+            <strong>${audioData.name}</strong> - ${audioData.title}
+          </div>
+          <button class="close-btn" onclick="closeAudioPlayer()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="audio-player-container">
+          <div class="audio-preview">
+            <i class="fas fa-music"></i>
+            <div class="audio-info">
+              <h3>${audioData.title}</h3>
+              <p>主播：${audioData.name}</p>
+              <p>日期：${audioData.userTime}</p>
+            </div>
+            <audio class="audio-player" controls autoplay preload="metadata">
+              <source src="${audioData.data}" type="audio/mpeg">
+              您的瀏覽器不支持音頻元素
+            </audio>
+            <div class="audio-controls">
+              <button class="audio-btn primary" onclick="window.open('${audioData.wavePlay}', '_blank')">
+                <i class="fas fa-external-link-alt"></i> 在 WAVE 開啟
+              </button>
+              <button class="audio-btn secondary" onclick="downloadAudio(${JSON.stringify(audioData).replace(/"/g, '&quot;')})">
+                <i class="fas fa-download"></i> 下載音檔
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      showToast('音檔已在右側播放器載入');
+    }
+
+    function closeAudioPlayer() {
+      const playerContainer = document.getElementById('playerContainer');
+      playerContainer.innerHTML = `
+        <div class="welcome-message">
+          <i class="fas fa-headphones"></i>
+          <h3>選擇音檔開始播放</h3>
+          <p>點擊左側表格中的音檔控制器開始播放</p>
+        </div>
+      `;
+    }
+
+    function copyAudioLink(url) {
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('音檔連結已複製到剪貼簿');
+      }).catch(() => {
+        alert('複製失敗，請手動複製連結');
+      });
+    }
+
+    let currentDownloadController = null;
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function createProgressDialog(fileName) {
+      const progressDialog = document.createElement('div');
+      progressDialog.className = 'download-progress';
+      progressDialog.id = 'downloadProgress';
+      
+      progressDialog.innerHTML = `
+        <h4><i class="fas fa-download"></i> 正在下載</h4>
+        <div class="file-name">${fileName}</div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="progress-text">
+          <span id="progressPercent">0%</span>
+          <span id="progressSize">0 / 0</span>
+        </div>
+        <div class="download-controls">
+          <button class="cancel-btn" onclick="cancelDownload()">
+            <i class="fas fa-times"></i> 取消下載
+          </button>
+        </div>
+      `;
+      
+      document.body.appendChild(progressDialog);
+      return progressDialog;
+    }
+
+    function updateProgress(loaded, total) {
+      const progressBar = document.getElementById('progressBar');
+      const progressPercent = document.getElementById('progressPercent');
+      const progressSize = document.getElementById('progressSize');
+      
+      if (progressBar && progressPercent && progressSize) {
+        const percent = Math.round((loaded / total) * 100);
+        progressBar.style.width = percent + '%';
+        progressPercent.textContent = percent + '%';
+        progressSize.textContent = `${formatFileSize(loaded)} / ${formatFileSize(total)}`;
+      }
+    }
+
+    function removeProgressDialog() {
+      const progressDialog = document.getElementById('downloadProgress');
+      if (progressDialog) {
+        progressDialog.style.animation = 'slideOutRight 0.3s ease-out';
+        setTimeout(() => {
+          if (document.body.contains(progressDialog)) {
+            document.body.removeChild(progressDialog);
+          }
+        }, 300);
+      }
+    }
+
+    function cancelDownload() {
+      if (currentDownloadController) {
+        currentDownloadController.abort();
+        currentDownloadController = null;
+      }
+      removeProgressDialog();
+      showToast('下載已取消');
+    }
+
+    async function downloadAudio(file) {
+      try {
+        // 建立下載檔名：日期+主播+標題，清理特殊字符
+        const cleanTitle = file.title.replace(/[<>:"/\\|?*]/g, ''); // 移除不允許的檔名字符
+        const cleanName = file.name.replace(/[<>:"/\\|?*]/g, '');
+        const fileName = `${file.userTime.replace(/\//g, '-')}_${cleanName}_${cleanTitle}.mp3`;
+        
+        // 創建進度對話框
+        const progressDialog = createProgressDialog(fileName);
+        
+        // 創建 AbortController 用於取消下載
+        currentDownloadController = new AbortController();
+        
+        // 使用 fetch 獲取音檔數據，並監控進度
+        const response = await fetch(file.data, {
+          signal: currentDownloadController.signal
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const contentLength = response.headers.get('content-length');
+        const total = parseInt(contentLength, 10);
+        let loaded = 0;
+        
+        // 創建 ReadableStream 來追蹤進度
+        const reader = response.body.getReader();
+        const chunks = [];
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) break;
+          
+          chunks.push(value);
+          loaded += value.length;
+          
+          // 更新進度
+          if (total) {
+            updateProgress(loaded, total);
+          }
+        }
+        
+        // 合併所有數據塊
+        const blob = new Blob(chunks, { type: 'audio/mpeg' });
+        
+        // 建立 Blob URL
+        const blobUrl = window.URL.createObjectURL(blob);
+        
+        // 建立下載連結
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = fileName;
+        link.style.display = 'none';
+        
+        // 觸發下載
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // 清理 Blob URL
+        window.URL.revokeObjectURL(blobUrl);
+        
+        // 移除進度對話框
+        removeProgressDialog();
+        
+        // 重置控制器
+        currentDownloadController = null;
+        
+        showToast(`下載完成：${fileName}`);
+      } catch (error) {
+        // 移除進度對話框
+        removeProgressDialog();
+        
+        if (error.name === 'AbortError') {
+          // 下載被取消，不顯示錯誤
+          return;
+        }
+        
+        console.error('下載失敗:', error);
+        showToast('下載失敗，請稍後再試');
+        
+        // 重置控制器
+        currentDownloadController = null;
+      }
+    }
+
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `<i class="fas fa-check"></i> ${message}`;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        if (document.body.contains(toast)) {
+          document.body.removeChild(toast);
+        }
+      }, 3000);
     }
 
     function displayPlayData(files) {
-        const fileTableBody = document.querySelector("#fileTable tbody");
-        fileTableBody.innerHTML = ''; // 清空表格
+      const fileTableBody = document.querySelector("#fileTable tbody");
+      fileTableBody.innerHTML = ''; // 清空表格
 
-        if (files && files.length > 0) {
-            files.forEach(file => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${file.userTime}</td>
-                    <td>${file.name}</td>
-                    <td>${file.title}</td>
-                    <td><a href="${file.wavePlay}" target="_blank">音檔</a></td>
-                    <td>
-                        <audio controls preload="none">
-                            <source src='${file.data}' type="audio/mpeg">
-                            您的瀏覽器不支持音頻元素
-                        </audio>
-                    </td>
-                `;
-                fileTableBody.appendChild(row);
-            });
-        } else {
-            fileTableBody.innerHTML = `<tr><td colspan="5" class="text-center">查無資料，請確認主播名稱是否正確</td></tr>`;
-        }
+      if (files && files.length > 0) {
+        files.forEach(file => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${file.userTime}</td>
+            <td>${file.name}</td>
+            <td>${file.title}</td>
+            <td>
+              <button onclick="downloadAudio(${JSON.stringify(file).replace(/"/g, '&quot;')})"
+                style="background: #00b894; border: none; color: white; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                <i class="fas fa-download" style="vertical-align: middle;"></i> 下載
+              </button>
+            </td>
+            <td>
+              <div style="display: flex; gap: 8px; align-items: center; justify-content: center;">
+                <button onclick="playAudioInRightPanel(${JSON.stringify(file).replace(/"/g, '&quot;')})" 
+                        style="background: #74b9ff; border: none; color: white; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+                  <i class="fas fa-play"></i>
+                </button>
+              </div>
+            </td>
+          `;
+          fileTableBody.appendChild(row);
+        });
+      } else {
+        fileTableBody.innerHTML = `
+          <tr>
+            <td colspan="5" class="no-data">
+              <i class="fas fa-exclamation-triangle"></i>
+              <div>
+                <h4>查無資料</h4>
+                <p>請確認主播名稱是否正確</p>
+              </div>
+            </td>
+          </tr>
+        `;
+      }
     }
 
     document.getElementById('searchForm').addEventListener('submit', async (event) => {
-        event.preventDefault(); // 阻止表單默認提交行為
-        const name = document.querySelector('input[name="name"]').value.trim();
-        if (!name) {
-            alert("請輸入主播名稱");
-            return;
-        }
+      event.preventDefault(); // 阻止表單默認提交行為
+      const name = document.querySelector('input[name="name"]').value.trim();
+      if (!name) {
+        alert("請輸入主播名稱");
+        return;
+      }
 
-        const files = await fetchPlayData(name);
-        displayPlayData(files);
+      // 顯示載入狀態
+      const fileTableBody = document.querySelector("#fileTable tbody");
+      fileTableBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="no-data">
+            <i class="fas fa-spinner fa-spin"></i>
+            <h4>搜尋中...</h4>
+            <p>正在查詢 ${name} 的回放記錄</p>
+          </td>
+        </tr>
+      `;
+
+      const files = await fetchPlayData(name);
+      displayPlayData(files);
     });
-    </script>
+  </script>
 </body>
 </html>
