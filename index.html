@@ -710,9 +710,11 @@
         }
 
         let authorId = null;
+        let userAvatar = null;
         for (const user of userData) {
           if (user.name === name) {
             authorId = user.id;
+            userAvatar = user.avatar_url; // 獲取用戶頭像
             break;
           }
         }
@@ -736,6 +738,7 @@
               userTime: userTime,
               title: play.title,
               name: name,
+              avatar: userAvatar, // 添加用戶頭像
               wavePlay: `https://wave.com.tw/plays/${play.id}`,
               data: play.url
             });
@@ -765,7 +768,10 @@
         </div>
         <div class="audio-player-container">
           <div class="audio-preview">
-            <i class="fas fa-music"></i>
+            <img src="${audioData.avatar}" alt="${audioData.name}" 
+                 style="width: 160px; height: 160px; border-radius: 50%; object-fit: cover; margin-bottom: 20px; border: 3px solid #74b9ff;"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <i class="fas fa-music" style="display: none; font-size: 4rem; color: #74b9ff; margin-bottom: 20px;"></i>
             <div class="audio-info">
               <h3>${audioData.title}</h3>
               <p>主播：${audioData.name}</p>
