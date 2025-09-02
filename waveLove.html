@@ -415,9 +415,10 @@
           }
           
           const raw = await response.text();
-          const data = JSON.parse(raw);
+          const responseData = JSON.parse(raw);
+          
 
-          const lives = data.data;
+          const lives = responseData.data;
           if (!lives || lives.length === 0) break;
 
           lives.forEach(live => {
@@ -433,7 +434,7 @@
             });
           });
 
-          cursor = data.cursor;
+          cursor = responseData.cursor;
           if (!cursor) break;
         }
 
