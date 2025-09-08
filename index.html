@@ -987,9 +987,9 @@
 
         // 獲取播放列表
         while (true) {
-          const playResponse = await fetch(`https://api.wave.com.tw/api/v1/plays?author_id=${authorId}&cursor=${cursor}`);
+          // const playResponse = await fetch(`https://api.wave.com.tw/api/v1/plays?author_id=${authorId}&cursor=${cursor}`);
           // 抓不出來的原因為受 CORS 限制開放以下將正常抓取
-          //const playResponse = await fetch(`https://corsproxy.io/?${encodeURIComponent(`https://api.wave.com.tw/api/v1/plays?author_id=${authorId}&cursor=${cursor}`)}`);
+          const playResponse = await fetch(`https://corsproxy.io/?${encodeURIComponent(`https://api.wave.com.tw/api/v1/plays?author_id=${authorId}&cursor=${cursor}`)}`);
           const playRaw = await playResponse.text();
           const playData = JSON.parse(playRaw);
           const playList = playData.data;
