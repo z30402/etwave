@@ -961,9 +961,9 @@
 
       try {
         // 獲取用戶 ID
-        const userResponse = await fetch(`https://api.wave.com.tw/api/v1/users?q=${name}`);
+        // const userResponse = await fetch(`https://api.wave.com.tw/api/v1/users?q=${name}`);
         // 抓不出來的原因為受 CORS 限制開放以下將正常抓取
-        //const userResponse = await fetch(`https://corsproxy.io/?${encodeURIComponent(`https://api.wave.com.tw/api/v1/users?q=${name}`)}`);
+        const userResponse = await fetch(`https://corsproxy.io/?${encodeURIComponent(`https://api.wave.com.tw/api/v1/users?q=${name}`)}`);
         const userRaw = await userResponse.text();
         const userData = JSON.parse(userRaw).data;
 
