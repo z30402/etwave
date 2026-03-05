@@ -963,9 +963,9 @@
         // 獲取用戶 ID
         // const userResponse = await fetch(`https://api.wave.com.tw/api/v1/users?q=${name}`);
         // 抓不出來的原因為受 CORS 限制開放以下將正常抓取
-        const userResponse = await fetch(`https://corsproxy.io/?${encodeURIComponent(`https://api.wave.com.tw/api/v1/users?q=${name}`)}`);
-        const userRaw = await userResponse.text();
-        const userData = JSON.parse(userRaw).data;
+        const userResponse = await fetch(`https://etwave.vercel.app/api/users.js?q=${encodeURIComponent(name)}`);
+        const userData = await userResponse.json();
+        const users = userData.data;
 
         if (!userData || userData.length === 0) {
           return []; // 如果找不到用戶，返回空數組
@@ -989,9 +989,8 @@
         while (true) {
           // const playResponse = await fetch(`https://api.wave.com.tw/api/v1/plays?author_id=${authorId}&cursor=${cursor}`);
           // 抓不出來的原因為受 CORS 限制開放以下將正常抓取
-          const playResponse = await fetch(`https://corsproxy.io/?${encodeURIComponent(`https://api.wave.com.tw/api/v1/plays?author_id=${authorId}&cursor=${cursor}`)}`);
-          const playRaw = await playResponse.text();
-          const playData = JSON.parse(playRaw);
+          const playResponse = await fetch(`https://etwave.vercel.app/api/plays.js?author_id=${authorId}&cursor=${cursor}`);
+          const playData = await playResponse.json();
           const playList = playData.data;
 
           if (!playList || playList.length === 0) break;
