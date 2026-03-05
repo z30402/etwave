@@ -958,43 +958,51 @@
     async function fetchPlayData(name) {
       let cursor = '';
       let result = [];
-
+    
       try {
-        // 獲取用戶 ID
-        // const userResponse = await fetch(`https://api.wave.com.tw/api/v1/users?q=${name}`);
-        // 抓不出來的原因為受 CORS 限制開放以下將正常抓取
+        // 獲取用戶 ID - 使用 Vercel API
         const userResponse = await fetch(`https://etwave.vercel.app/api/users.js?q=${encodeURIComponent(name)}`);
+        
+        if (!userResponse.ok) {
+          throw new Error(`User API error: ${userResponse.status}`);
+        }
+        
         const userData = await userResponse.json();
-        const users = userData.data;
-
-        if (!userData || userData.length === 0) {
+        
+        // 修正：userData 本身就是回應，data 在 userData.data 中
+        if (!userData || !userData.data || userData.data.length === 0) {
           return []; // 如果找不到用戶，返回空數組
         }
-
+    
         let authorId = null;
         let userAvatar = null;
-        for (const user of userData) {
+        
+        // 遍歷 userData.data（這才是用戶陣列）
+        for (const user of userData.data) {
           if (user.name === name) {
             authorId = user.id;
             userAvatar = user.avatar_url; // 獲取用戶頭像
             break;
           }
         }
-
+    
         if (!authorId) {
           return []; // 如果找不到匹配的用戶名，返回空數組
         }
-
+    
         // 獲取播放列表
         while (true) {
-          // const playResponse = await fetch(`https://api.wave.com.tw/api/v1/plays?author_id=${authorId}&cursor=${cursor}`);
-          // 抓不出來的原因為受 CORS 限制開放以下將正常抓取
           const playResponse = await fetch(`https://etwave.vercel.app/api/plays.js?author_id=${authorId}&cursor=${cursor}`);
+          
+          if (!playResponse.ok) {
+            throw new Error(`Plays API error: ${playResponse.status}`);
+          }
+          
           const playData = await playResponse.json();
           const playList = playData.data;
-
+    
           if (!playList || playList.length === 0) break;
-
+    
           playList.forEach(play => {
             const userTime = new Date(play.created_at * 1000).toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
             result.push({
@@ -1006,7 +1014,7 @@
               data: play.url
             });
           });
-
+    
           cursor = playData.cursor;
           if (!cursor) break;
         }
