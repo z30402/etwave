@@ -28,7 +28,7 @@
 
     /* 左側面板 - 直播列表 */
     .left-panel {
-      width: 50%;
+      width: 40%;
       background: #1a1a2e;
       overflow-y: auto;
       transition: width 0.3s ease;
@@ -36,7 +36,7 @@
 
     /* 右側面板 - 播放器 */
     .right-panel {
-      width: 50%;
+      width: 60%;
       background: #16213e;
       display: flex;
       flex-direction: column;
@@ -343,11 +343,11 @@
     }
 
     .streamer-avatar-large {
-      width: 80px;
-      height: 80px;
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
       object-fit: cover;
-      border: 3px solid white;
+      border: 4px solid white;
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
@@ -356,12 +356,12 @@
       backdrop-filter: blur(10px);
       border: none;
       color: white;
-      width: 36px;
-      height: 36px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       cursor: pointer;
       transition: all 0.3s ease;
-      font-size: 1rem;
+      font-size: 1.2rem;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -399,22 +399,22 @@
 
     .video-progress {
       width: 100%;
-      max-width: 600px;
-      margin-bottom: 25px;
+      max-width: 700px;
+      margin-bottom: 40px;
     }
 
     .progress-time {
       display: flex;
       justify-content: space-between;
       color: white;
-      font-size: 0.9rem;
-      margin-bottom: 8px;
+      font-size: 1.1rem;
+      margin-bottom: 12px;
       font-weight: 500;
     }
 
     .progress-bar-track {
       width: 100%;
-      height: 3px;
+      height: 4px;
       background: rgba(255,255,255,0.3);
       border-radius: 2px;
       position: relative;
@@ -430,27 +430,27 @@
     }
 
     .player-info {
-      margin-bottom: 35px;
+      margin-bottom: 40px;
     }
 
     .player-title {
-      font-size: 1.8rem;
+      font-size: 2.2rem;
       font-weight: 700;
       color: white;
-      margin-bottom: 12px;
+      margin-bottom: 15px;
       text-shadow: 0 2px 8px rgba(0,0,0,0.5);
       line-height: 1.3;
     }
 
     .player-streamer {
-      font-size: 1rem;
+      font-size: 1.3rem;
       color: rgba(255,255,255,0.95);
       font-weight: 500;
     }
 
     .play-button {
-      width: 70px;
-      height: 70px;
+      width: 90px;
+      height: 90px;
       border-radius: 50%;
       background: rgba(255,255,255,0.2);
       backdrop-filter: blur(10px);
@@ -461,7 +461,7 @@
       cursor: pointer;
       transition: all 0.3s ease;
       color: white;
-      font-size: 1.8rem;
+      font-size: 2.2rem;
     }
 
     .play-button:hover {
@@ -516,7 +516,7 @@
 
     @media (min-width: 1400px) {
       .live-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
       }
     }
 
@@ -676,20 +676,32 @@
       return categoryNames[categoryInfo.id] || categoryInfo.id;
     }
 
+    // CORS 代理設定 - 請將此 URL 替換為你自己的代理服務器地址
+    const PROXY_URL = 'https://etwave.vercel.app/api/lives';
+    
     async function fetchAllLives() {
       try {
         let cursor = '';
         let result = [];
 
         while (true) {
-          const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(`https://api.wave.com.tw/api/v1/lives?sort_by=all_viewer_count&cursor=${cursor}`)}`);
+          // 如果有自訂代理 URL，使用它；否則嘗試公開代理
+          let apiUrl;
+          if (PROXY_URL && PROXY_URL !== 'YOUR_PROXY_URL_HERE') {
+            // 使用自訂代理
+            apiUrl = `${PROXY_URL}?cursor=${cursor}`;
+          } else {
+            // 使用公開代理（可能不穩定）
+            apiUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.wave.com.tw/api/v1/lives?sort_by=all_viewer_count&cursor=${cursor}`)}`;
+          }
+          
+          const response = await fetch(apiUrl);
           
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
           
-          const raw = await response.text();
-          const data = JSON.parse(raw);
+          const data = await response.json();
 
           const lives = data.data;
           if (!lives || lives.length === 0) break;
@@ -725,6 +737,7 @@
         return result;
       } catch (error) {
         console.error('載入直播時發生錯誤:', error);
+        showToast('載入失敗：' + error.message);
         return [];
       }
     }
