@@ -1,23 +1,17 @@
 {
-     "version": 2,
-     "builds": [
-       {
-         "src": "api/**/*.js",
-         "use": "@vercel/node"
-       },
-       {
-         "src": "public/**",
-         "use": "@vercel/static"
-       }
-     ],
-     "routes": [
-       {
-         "src": "/api/(.*)",
-         "dest": "/api/$1"
-       },
-       {
-         "src": "/(.*)",
-         "dest": "/public/$1"
-       }
-     ]
-   }
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/lives",
+      "destination": "/api/lives.js"
+    },
+    {
+      "source": "/api/users",
+      "destination": "/api/users.js"
+    },
+    {
+      "source": "/api/plays",
+      "destination": "/api/plays.js"
+    }
+  ]
+}
