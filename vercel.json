@@ -12,6 +12,10 @@
     {
       "source": "/api/plays",
       "destination": "/api/plays.js"
+    },
+    {
+      "source": "/api/gifts",
+      "destination": "/api/gifts.js"
     }
   ]
 }
