@@ -351,6 +351,26 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
+    /* 左上主播藥丸標頭（頭像＋名稱＋等級） */
+    .streamer-pill {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: rgba(0,0,0,0.38); backdrop-filter: blur(8px);
+      border-radius: 999px; padding: 6px 14px 6px 6px; max-width: 78%;
+    }
+    .pill-avatar {
+      width: 44px; height: 44px; border-radius: 50%; object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.85); flex-shrink: 0;
+    }
+    .pill-name {
+      color: #fff; font-weight: 700; font-size: 1rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .pill-level {
+      flex-shrink: 0; background: linear-gradient(135deg,#3ddc84,#2ecc71);
+      color: #fff; font-weight: 700; font-size: 0.78rem; line-height: 1;
+      padding: 3px 8px; border-radius: 7px; box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
+
     .close-btn {
       background: rgba(0,0,0,0.5);
       backdrop-filter: blur(10px);
@@ -729,6 +749,7 @@
             result.push({
               id: live.id,
               name: live.streamer.name,
+              level: (live.streamer && live.streamer.level) || 0,
               image: live.streamer.avatar_url,
               title: live.title,
               backImage: live.streamer.avatar_url || live.streamer.avatar_url,
@@ -780,8 +801,11 @@
           <div class="player-overlay"></div>
           <div class="player-content">
             <div class="player-header">
-              <img src="${live.image}" alt="${live.name}" class="streamer-avatar-large" 
-                   onerror="this.style.display='none'">
+              <div class="streamer-pill">
+                <img src="${live.image}" alt="${live.name}" class="pill-avatar" onerror="this.style.display='none'">
+                <span class="pill-name">${live.name}</span>
+                ${live.level ? `<span class="pill-level">${live.level}</span>` : ''}
+              </div>
               <button class="close-btn" onclick="closeVideoPlayer()">
                 <i class="fas fa-times"></i>
               </button>
