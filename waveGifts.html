@@ -735,6 +735,41 @@
             const to=setTimeout(()=>{ running=false; clearInterval(iv); }, Math.min((durSec||10),30)*1000);
             _particleStop=()=>{ running=false; clearInterval(iv); clearTimeout(to); };
         }
+        // 累積進化特效：每丟一個堆一張圖，堆到上限清一半，累積數跨過 threshold 就換下一階圖（對應 gift_cookie 甜甜圈）
+        function startCounted(list, tagEl){
+            stopParticles();
+            const c=document.getElementById('fx-particles');
+            const W=window.innerWidth, H=window.innerHeight;
+            const maxT=list[list.length-1].t||0;
+            const CAP=100;
+            let count=0, pile=[], running=true;
+            const imgFor=(cnt)=>{ let u=list[0].img; for(const e of list){ if((e.t||0)<=cnt && e.img) u=e.img; } return u; };
+            const tierOf=(cnt)=>{ let i=0; list.forEach((e,idx)=>{ if((e.t||0)<=cnt) i=idx; }); return i; };
+            const spawnOne=(src)=>{
+                const el=document.createElement('img'); el.src=src;
+                const size=30+Math.random()*26; el.style.width=size+'px';
+                el.style.left=(Math.random()*(W-size))+'px'; el.style.top='0px';
+                c.appendChild(el); pile.push(el);
+                const ty=Math.random()*(H-size);
+                el.animate([
+                    {transform:'translateY(-'+(size+20)+'px) rotate(0deg)'},
+                    {transform:'translateY('+ty+'px) rotate('+((Math.random()*60)-30)+'deg)'}
+                ],{duration:600+Math.random()*500,easing:'cubic-bezier(.3,.7,.4,1)',fill:'forwards'});
+            };
+            const step=Math.max(10, Math.round(maxT/120)||10);
+            const tick=()=>{
+                if(!running) return;
+                const src=imgFor(count);
+                for(let k=0;k<3;k++) spawnOne(src);
+                count+=step;
+                if(tagEl) tagEl.textContent='累積進化特效（第 '+(tierOf(count)+1)+'/'+list.length+' 階，count '+Math.min(count,maxT)+'）';
+                if(pile.length>CAP){ const half=pile.splice(0,Math.floor(pile.length/2));
+                    half.forEach(e=>{ const a=e.animate([{opacity:1},{opacity:0}],{duration:400,fill:'forwards'}); a.onfinish=()=>e.remove(); }); }
+                if(count>=maxT){ running=false; clearInterval(iv); }
+            };
+            const iv=setInterval(tick,140);
+            _particleStop=()=>{ running=false; clearInterval(iv); };
+        }
         function closeFx(){
             document.getElementById('fx-overlay').classList.remove('show');
             if(_frameTimer){ clearInterval(_frameTimer); _frameTimer=null; }
@@ -752,22 +787,30 @@
             // 取 threshold 最低(基礎)那組動畫
             let anim = null;
             if(cfg && cfg.a && cfg.a.length){ anim = [...cfg.a].sort((x,y)=>(x.t||0)-(y.t||0))[0]; }
+            const list = (cfg && cfg.a && cfg.a.length) ? [...cfg.a].sort((x,y)=>(x.t||0)-(y.t||0)) : (anim?[anim]:[]);
+            const base = list[0];
             const render = () => {
                 if(_frameTimer){ clearInterval(_frameTimer); _frameTimer=null; }
                 stopParticles();
-                if(anim && anim.frames && anim.frames.length && (!cfg || cfg.mt===0)){
-                    // 粒子飄落特效（mediaType=Static + 多張小圖）
-                    media.style.display='none';
-                    startParticles(anim.frames, cfg?cfg.d:10);
-                    tagEl.textContent='粒子特效（飄落・'+anim.frames.length+'種）';
-                } else if(anim && anim.webp){
-                    // 全螢幕動態 webp
+                const webp = (list.find(x=>x.webp)||{}).webp;
+                if(webp){
+                    // 1) 全螢幕動態 webp
                     media.style.display='';
-                    media.src = anim.webp + (anim.webp.includes('?')?'&':'?') + 't=' + Date.now();
+                    media.src = webp + (webp.includes('?')?'&':'?') + 't=' + Date.now();
                     tagEl.textContent='動態 WebP';
-                } else if(anim && anim.img){
+                } else if(base && base.frames && base.frames.length){
+                    // 2) 氛圍粒子（urls 多圖）：持續飄落
+                    media.style.display='none';
+                    startParticles(base.frames, cfg?cfg.d:10);
+                    tagEl.textContent='氛圍粒子特效（'+base.frames.length+'種・飄落）';
+                } else if(list.length>1){
+                    // 3) 累積進化（多 threshold 單圖）：堆疊＋清半＋換圖
+                    media.style.display='none';
+                    startCounted(list, tagEl);
+                } else if(base && base.img){
+                    // 4) 靜態單圖
                     media.style.display='';
-                    media.src=anim.img; tagEl.textContent='靜態圖';
+                    media.src=base.img; tagEl.textContent='靜態圖';
                 } else {
                     media.style.display='';
                     media.src=fallbackIcon||''; tagEl.textContent = cfg?'無可播放的動畫':'此禮物不在設定檔中';
