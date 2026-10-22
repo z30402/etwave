@@ -822,10 +822,20 @@
           const durationEl = document.getElementById('duration');
           const progressTrack = document.getElementById('progressTrack');
           
-          // 使用簡化的配置
+          // 直播串流設定：宣告 isLive + 關閉堆積緩衝 + 自動清理 SourceBuffer，避免緩衝累積造成音訊斷續
           flvPlayer = flvjs.createPlayer({
             type: 'flv',
+            isLive: true,
+            cors: true,
             url: live.flvUrl
+          }, {
+            enableStashBuffer: false,          // 關閉堆積緩衝，降低延遲與卡頓
+            stashInitialSize: 128,
+            autoCleanupSourceBuffer: true,     // 自動清理已播放緩衝，避免越積越多
+            autoCleanupMaxBackwardDuration: 3,
+            autoCleanupMinBackwardDuration: 2,
+            fixAudioTimestampGap: false,       // 不插入靜音補幀（部分直播會因此音訊斷續）
+            lazyLoad: false
           });
           
           flvPlayer.attachMediaElement(videoElement);
@@ -841,6 +851,14 @@
 
           // 更新進度條
           videoElement.addEventListener('timeupdate', () => {
+            // 直播追帧：緩衝領先太多就跳到接近直播邊緣，避免延遲累積與卡頓
+            try {
+              const buf = videoElement.buffered;
+              if (buf && buf.length) {
+                const end = buf.end(buf.length - 1);
+                if (end - videoElement.currentTime > 2) videoElement.currentTime = end - 0.5;
+              }
+            } catch (e) {}
             if (videoElement.duration) {
               const percent = (videoElement.currentTime / videoElement.duration) * 100;
               progressFill.style.width = percent + '%';
