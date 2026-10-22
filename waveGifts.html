@@ -491,10 +491,13 @@
         .fx-close:hover{background:rgba(255,255,255,.25);}
         .fx-replay{margin-top:16px;padding:10px 22px;border:none;border-radius:24px;cursor:pointer;
             background:linear-gradient(135deg,#3faaa0,#008f8f);color:#fff;font-size:.95rem;}
+.fx-particles{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:9998;}
+        .fx-particles img{position:absolute;will-change:transform,opacity;}
     </style>
 </head>
 <body>
     <div class="fx-overlay" id="fx-overlay">
+        <div class="fx-particles" id="fx-particles"></div>
         <div class="fx-stage">
             <button class="fx-close" onclick="closeFx()">&times;</button>
             <img class="fx-media" id="fx-media" alt="禮物特效">
@@ -677,6 +680,7 @@
         // === 禮物動畫 ===
         let GIFT_ANIM = {};
         let _frameTimer = null;
+        let _particleStop = null;
         async function loadGiftAnim(){
             try{
                 const r = await fetch('https://etwave.vercel.app/api/giftconfig.js');
@@ -697,9 +701,44 @@
                 console.log('禮物動畫設定載入:', Object.keys(map).length, '筆');
             }catch(e){ console.warn('動畫設定載入失敗', e); }
         }
+        function stopParticles(){
+            if(_particleStop){ _particleStop(); _particleStop=null; }
+            const c=document.getElementById('fx-particles'); if(c) c.innerHTML='';
+        }
+        // 粒子飄落特效：持續灑出 urls 裡的小圖，邊落邊旋轉（對應 App 的 AtmosphereGiftView）
+        function startParticles(urls, durSec){
+            stopParticles();
+            const c=document.getElementById('fx-particles');
+            const W=window.innerWidth, H=window.innerHeight;
+            let running=true;
+            const spawn=()=>{
+                const img=document.createElement('img');
+                img.src=urls[Math.floor(Math.random()*urls.length)];
+                const size=24+Math.random()*48;
+                img.style.width=size+'px';
+                img.style.left=(Math.random()*W)+'px';
+                img.style.top='0px';
+                img.style.opacity=(0.6+Math.random()*0.4).toFixed(2);
+                c.appendChild(img);
+                const drift=(Math.random()*2-1)*120;
+                const dur=3500+Math.random()*3500;
+                const spin=(Math.random()*2-1)*720;
+                const anim=img.animate([
+                    {transform:'translate(0,-'+size+'px) rotate(0deg)'},
+                    {transform:'translate('+drift+'px,'+(H+size)+'px) rotate('+spin+'deg)'}
+                ],{duration:dur,easing:'linear'});
+                anim.onfinish=()=>img.remove();
+            };
+            // 每 160ms 灑 2~3 片
+            const iv=setInterval(()=>{ if(!running)return; const n=2+Math.floor(Math.random()*2); for(let k=0;k<n;k++) spawn(); }, 160);
+            // 依 animation_duration 停止灑新的（最多 30 秒，避免太久）
+            const to=setTimeout(()=>{ running=false; clearInterval(iv); }, Math.min((durSec||10),30)*1000);
+            _particleStop=()=>{ running=false; clearInterval(iv); clearTimeout(to); };
+        }
         function closeFx(){
             document.getElementById('fx-overlay').classList.remove('show');
             if(_frameTimer){ clearInterval(_frameTimer); _frameTimer=null; }
+            stopParticles();
             document.getElementById('fx-media').src='';
         }
         function playGift(aid, name, fallbackIcon){
@@ -715,19 +754,22 @@
             if(cfg && cfg.a && cfg.a.length){ anim = [...cfg.a].sort((x,y)=>(x.t||0)-(y.t||0))[0]; }
             const render = () => {
                 if(_frameTimer){ clearInterval(_frameTimer); _frameTimer=null; }
-                if(anim && anim.webp){
-                    // 動態 webp：加亂數避免快取停格，重新觸發播放
+                stopParticles();
+                if(anim && anim.frames && anim.frames.length && (!cfg || cfg.mt===0)){
+                    // 粒子飄落特效（mediaType=Static + 多張小圖）
+                    media.style.display='none';
+                    startParticles(anim.frames, cfg?cfg.d:10);
+                    tagEl.textContent='粒子特效（飄落・'+anim.frames.length+'種）';
+                } else if(anim && anim.webp){
+                    // 全螢幕動態 webp
+                    media.style.display='';
                     media.src = anim.webp + (anim.webp.includes('?')?'&':'?') + 't=' + Date.now();
                     tagEl.textContent='動態 WebP';
-                } else if(anim && anim.frames && anim.frames.length){
-                    // 逐格 PNG：以 animation_duration 均分播放，循環
-                    const frames=anim.frames; const dur=(cfg.d||3)*1000;
-                    const iv=Math.max(40, dur/frames.length); let i=0;
-                    media.src=frames[0]; tagEl.textContent='逐格動畫 ('+frames.length+'格)';
-                    _frameTimer=setInterval(()=>{ i=(i+1)%frames.length; media.src=frames[i]; }, iv);
                 } else if(anim && anim.img){
+                    media.style.display='';
                     media.src=anim.img; tagEl.textContent='靜態圖';
                 } else {
+                    media.style.display='';
                     media.src=fallbackIcon||''; tagEl.textContent = cfg?'無可播放的動畫':'此禮物不在設定檔中';
                 }
             };
