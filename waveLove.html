@@ -284,7 +284,7 @@
       padding: 40px;
     }
 
-    .welcome-message i {
+    .welcome-message > i {
       font-size: 5rem;
       margin-bottom: 20px;
       opacity: 0.5;
@@ -468,6 +468,16 @@
       background: rgba(255,255,255,0.3);
       transform: scale(1.1);
     }
+
+    /* 540x959 直式播放框 + 按鈕微調 */
+    .player-host{ padding:0 !important; width:100%; height:100%;
+      display:flex; align-items:center; justify-content:center; }
+    .player-frame{ position:relative; width:min(94%, calc(90vh * 540 / 959));
+      aspect-ratio:540 / 959; max-height:90vh; border-radius:18px; overflow:hidden;
+      box-shadow:0 20px 60px rgba(0,0,0,.55); background:#0b1420; }
+    .close-btn{ width:40px; height:40px; font-size:1.05rem; }
+    .play-button{ width:84px; height:84px; font-size:2rem; }
+    .play-button i{ margin-left:5px; }  /* 三角形視覺置中 */
 
     .play-button i {
       margin-left: 4px;
@@ -762,7 +772,9 @@
       }
 
       const playerContainer = document.getElementById('playerContainer');
+      playerContainer.className = 'player-host';
       playerContainer.innerHTML = `
+        <div class="player-frame">
         <div class="video-player-wrapper">
           <div class="player-background" style="background-image: url('${live.backgroundImage}');"></div>
           <div class="player-overlay"></div>
@@ -796,6 +808,7 @@
               </button>
             </div>
           </div>
+        </div>
         </div>
       `;
 
@@ -907,6 +920,7 @@
       }
 
       const playerContainer = document.getElementById('playerContainer');
+      playerContainer.className = 'welcome-message';
       playerContainer.innerHTML = `
         <div class="welcome-message">
           <i class="fas fa-video"></i>
