@@ -955,74 +955,117 @@
   <script>
     let currentAudio = null;
 
-    async function fetchPlayData(name) {
-      let cursor = '';
-      let result = [];
-    
-      try {
-        // 獲取用戶 ID - 使用 Vercel API
-        const userResponse = await fetch(`https://etwave.vercel.app/api/users.js?q=${encodeURIComponent(name)}`);
-        
-        if (!userResponse.ok) {
-          throw new Error(`User API error: ${userResponse.status}`);
-        }
-        
-        const userData = await userResponse.json();
-        
-        // 修正：userData 本身就是回應，data 在 userData.data 中
-        if (!userData || !userData.data || userData.data.length === 0) {
-          return []; // 如果找不到用戶，返回空數組
-        }
-    
-        let authorId = null;
-        let userAvatar = null;
-        
-        // 遍歷 userData.data（這才是用戶陣列）
-        for (const user of userData.data) {
-          if (user.name === name) {
-            authorId = user.id;
-            userAvatar = user.avatar_url; // 獲取用戶頭像
-            break;
-          }
-        }
-    
-        if (!authorId) {
-          return []; // 如果找不到匹配的用戶名，返回空數組
-        }
-    
-        // 獲取播放列表
-        while (true) {
-          const playResponse = await fetch(`https://etwave.vercel.app/api/plays.js?author_id=${authorId}&cursor=${cursor}`);
-          
-          if (!playResponse.ok) {
-            throw new Error(`Plays API error: ${playResponse.status}`);
-          }
-          
-          const playData = await playResponse.json();
-          const playList = playData.data;
-    
-          if (!playList || playList.length === 0) break;
-    
-          playList.forEach(play => {
-            const userTime = new Date(play.created_at * 1000).toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
-            result.push({
-              userTime: userTime,
-              title: play.title,
-              name: name,
-              avatar: userAvatar, // 添加用戶頭像
-              wavePlay: `https://wave.com.tw/plays/${play.id}`,
-              data: play.url
-            });
-          });
-    
-          cursor = playData.cursor;
-          if (!cursor) break;
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        return []; // 發生錯誤時返回空數組，避免程式崩潰
+    // ===== 回放動態載入 =====
+    const playState = { name:'', authorId:null, avatar:null, cursor:'', loading:false, done:true, count:0 };
+    let _playScrollBound = false;
+
+    function mapPlay(play, name, avatar){
+      const userTime = new Date(play.created_at * 1000).toLocaleString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit' });
+      return { userTime, title: play.title, name, avatar,
+               wavePlay: `https://wave.com.tw/plays/${play.id}`, data: play.url };
+    }
+
+    function createPlayRow(file){
+      const row = document.createElement('tr');
+      row.innerHTML = `
+            <td>${file.userTime}</td>
+            <td>${file.name}</td>
+            <td>${file.title}</td>
+            <td>
+              <button onclick="downloadAudio(${JSON.stringify(file).replace(/"/g, '&quot;')})"
+                style="background: #00b894; border: none; color: white; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                <i class="fas fa-download" style="vertical-align: middle;"></i> 下載
+              </button>
+            </td>
+            <td>
+              <div style="display: flex; gap: 8px; align-items: center; justify-content: center;">
+                <button onclick="playAudioInRightPanel(${JSON.stringify(file).replace(/"/g, '&quot;')})"
+                        style="background: #74b9ff; border: none; color: white; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+                  <i class="fas fa-play"></i>
+                </button>
+              </div>
+            </td>`;
+      return row;
+    }
+
+    function showTableMessage(html){
+      document.querySelector("#fileTable tbody").innerHTML = html;
+    }
+    const MSG_NO_DATA = `<tr><td colspan="5" class="no-data"><i class="fas fa-exclamation-triangle"></i><div><h4>查無資料</h4><p>請確認主播名稱是否正確</p></div></td></tr>`;
+    const MSG_ERROR   = `<tr><td colspan="5" class="no-data"><i class="fas fa-exclamation-triangle"></i><div><h4>載入失敗</h4><p>請稍後再試</p></div></td></tr>`;
+
+    async function resolveStreamer(name){
+      const r = await fetch(`https://etwave.vercel.app/api/users.js?q=${encodeURIComponent(name)}`);
+      if(!r.ok) throw new Error('User API ' + r.status);
+      const d = await r.json();
+      if(!d || !d.data) return null;
+      for(const u of d.data){ if(u.name === name) return { id:u.id, avatar:u.avatar_url }; }
+      return null;
+    }
+
+    // 抓「下一頁」並附加到表格；回傳本頁筆數
+    async function fetchNextPlayPage(){
+      if(playState.loading || playState.done) return 0;
+      playState.loading = true;
+      const tbody = document.querySelector("#fileTable tbody");
+      try{
+        const r = await fetch(`https://etwave.vercel.app/api/plays.js?author_id=${playState.authorId}&cursor=${playState.cursor}`);
+        if(!r.ok) throw new Error('Plays API ' + r.status);
+        const d = await r.json();
+        const list = d.data || [];
+        const frag = document.createDocumentFragment();
+        list.forEach(pl => frag.appendChild(createPlayRow(mapPlay(pl, playState.name, playState.avatar))));
+        tbody.appendChild(frag);
+        playState.count += list.length;
+        playState.cursor = d.cursor || '';
+        if(!playState.cursor || list.length === 0) playState.done = true;
+        return list.length;
+      } finally {
+        playState.loading = false;
       }
-      return result;
+    }
+
+    // 查詢主播 → 預載 2~3 個畫面的量 → 之後交給捲動載入
+    async function startSearch(name){
+      showTableMessage(`<tr><td colspan="5" class="no-data"><i class="fas fa-spinner fa-spin"></i><h4>搜尋中...</h4><p>正在查詢 ${name} 的回放記錄</p></td></tr>`);
+      let who;
+      try { who = await resolveStreamer(name); }
+      catch(err){ console.error(err); showTableMessage(MSG_ERROR); return; }
+      if(!who){ showTableMessage(MSG_NO_DATA); return; }
+
+      Object.assign(playState, { name, authorId: who.id, avatar: who.avatar, cursor:'', loading:false, done:false, count:0 });
+      const tbody = document.querySelector("#fileTable tbody");
+      tbody.innerHTML = '';            // 清掉「搜尋中」
+      tbody.scrollTop = 0;
+
+      // 預載：載到內容約 2.5 個畫面高（≈ 可視筆數的 2~3 倍）或已載完
+      let guard = 0;
+      do {
+        const n = await fetchNextPlayPage();
+        if(n === 0) break;
+        guard++;
+      } while(!playState.done && tbody.scrollHeight < tbody.clientHeight * 2.5 && guard < 12);
+
+      if(playState.count === 0) showTableMessage(MSG_NO_DATA);
+      bindPlayScroll();
+    }
+
+    // 捲到接近底部就載下一頁
+    function bindPlayScroll(){
+      if(_playScrollBound) return;
+      const tbody = document.querySelector("#fileTable tbody");
+      tbody.addEventListener('scroll', async () => {
+        if(playState.loading || playState.done) return;
+        if(tbody.scrollTop + tbody.clientHeight >= tbody.scrollHeight - 160){
+          await fetchNextPlayPage();
+          // 若一次載入量太少、仍不足一屏，補到可捲動
+          let guard = 0;
+          while(!playState.done && !playState.loading && tbody.scrollHeight <= tbody.clientHeight + 10 && guard < 6){
+            await fetchNextPlayPage(); guard++;
+          }
+        }
+      }, { passive: true });
+      _playScrollBound = true;
     }
 
     function playAudioInRightPanel(audioData) {
@@ -1310,20 +1353,7 @@
         return;
       }
 
-      // 顯示載入狀態
-      const fileTableBody = document.querySelector("#fileTable tbody");
-      fileTableBody.innerHTML = `
-        <tr>
-          <td colspan="5" class="no-data">
-            <i class="fas fa-spinner fa-spin"></i>
-            <h4>搜尋中...</h4>
-            <p>正在查詢 ${name} 的回放記錄</p>
-          </td>
-        </tr>
-      `;
-
-      const files = await fetchPlayData(name);
-      displayPlayData(files);
+      await startSearch(name);
     });
   </script>
 </body>
