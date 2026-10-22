@@ -16,6 +16,10 @@
     {
       "source": "/api/gifts",
       "destination": "/api/gifts.js"
+    },
+    {
+      "source": "/api/giftconfig",
+      "destination": "/api/giftconfig.js"
     }
   ]
 }

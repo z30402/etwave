@@ -475,9 +475,34 @@
                 font-size: 0.8rem;
             }
         }
+
+        /* === 禮物特效 overlay === */
+        .fx-overlay{position:fixed;inset:0;background:rgba(6,14,22,.82);backdrop-filter:blur(4px);
+            display:none;align-items:center;justify-content:center;z-index:9999;animation:fxIn .2s ease;}
+        .fx-overlay.show{display:flex;}
+        @keyframes fxIn{from{opacity:0}to{opacity:1}}
+        .fx-stage{position:relative;max-width:min(92vw,420px);width:100%;text-align:center;}
+        .fx-media{width:100%;max-height:72vh;object-fit:contain;
+            filter:drop-shadow(0 10px 30px rgba(0,0,0,.5));}
+        .fx-name{margin-top:14px;color:#dff;font-size:1.05rem;letter-spacing:.5px;}
+        .fx-tag{margin-top:6px;color:#6aa0bf;font-size:.8rem;}
+        .fx-close{position:absolute;top:-6px;right:-6px;width:40px;height:40px;border:none;
+            border-radius:50%;background:rgba(255,255,255,.12);color:#fff;font-size:1.3rem;cursor:pointer;}
+        .fx-close:hover{background:rgba(255,255,255,.25);}
+        .fx-replay{margin-top:16px;padding:10px 22px;border:none;border-radius:24px;cursor:pointer;
+            background:linear-gradient(135deg,#3faaa0,#008f8f);color:#fff;font-size:.95rem;}
     </style>
 </head>
 <body>
+    <div class="fx-overlay" id="fx-overlay">
+        <div class="fx-stage">
+            <button class="fx-close" onclick="closeFx()">&times;</button>
+            <img class="fx-media" id="fx-media" alt="禮物特效">
+            <div class="fx-name" id="fx-name"></div>
+            <div class="fx-tag" id="fx-tag"></div>
+            <button class="fx-replay" onclick="window.__fxReplay&&window.__fxReplay()">重播</button>
+        </div>
+    </div>
     <!-- 雪花效果容器 -->
     <div class="snowflakes" id="snowflakes"></div>
 
@@ -621,6 +646,10 @@
             gifts.forEach(gift => {
                 const giftCard = document.createElement('div');
                 giftCard.className = 'gift-card';
+                const aid = gift.animation_id || '';
+                giftCard.dataset.aid = aid;
+                giftCard.dataset.name = (gift.point || '') + ' Wave幣';
+                giftCard.addEventListener('click', () => playGift(aid, giftCard.dataset.name, gift.message_suffix_icon_url));
                 
                 const isPremium = gift.threshold > 0;
                 
@@ -645,12 +674,76 @@
             });
         }
 
+        // === 禮物動畫 ===
+        let GIFT_ANIM = {};
+        let _frameTimer = null;
+        async function loadGiftAnim(){
+            try{
+                const r = await fetch('https://etwave.vercel.app/api/giftconfig.js');
+                if(!r.ok) throw new Error('HTTP '+r.status);
+                const data = await r.json();
+                const kind = (data && data.gifts && data.gifts.kind) || [];
+                const map = {};
+                kind.forEach(g => {
+                    const aid = g.animation_id; if(!aid) return;
+                    const a = (g.animations || []).map(x => {
+                        let webp = (x.dynamic_url || x.webp_url || '').trim();
+                        if(!/\.webp(\?|$)/i.test(webp)) webp = '';
+                        return { t: x.threshold || 0, webp, frames: x.urls || [], img: (x.url || '').trim() };
+                    });
+                    if(a.length) map[aid] = { d: g.animation_duration || 3, w: g.width, h: g.height, mt: g.media_type, a };
+                });
+                GIFT_ANIM = map;
+                console.log('禮物動畫設定載入:', Object.keys(map).length, '筆');
+            }catch(e){ console.warn('動畫設定載入失敗', e); }
+        }
+        function closeFx(){
+            document.getElementById('fx-overlay').classList.remove('show');
+            if(_frameTimer){ clearInterval(_frameTimer); _frameTimer=null; }
+            document.getElementById('fx-media').src='';
+        }
+        function playGift(aid, name, fallbackIcon){
+            const ov=document.getElementById('fx-overlay');
+            const media=document.getElementById('fx-media');
+            const nameEl=document.getElementById('fx-name');
+            const tagEl=document.getElementById('fx-tag');
+            if(_frameTimer){ clearInterval(_frameTimer); _frameTimer=null; }
+            nameEl.textContent = name||'';
+            const cfg = GIFT_ANIM[aid];
+            // 取 threshold 最低(基礎)那組動畫
+            let anim = null;
+            if(cfg && cfg.a && cfg.a.length){ anim = [...cfg.a].sort((x,y)=>(x.t||0)-(y.t||0))[0]; }
+            const render = () => {
+                if(_frameTimer){ clearInterval(_frameTimer); _frameTimer=null; }
+                if(anim && anim.webp){
+                    // 動態 webp：加亂數避免快取停格，重新觸發播放
+                    media.src = anim.webp + (anim.webp.includes('?')?'&':'?') + 't=' + Date.now();
+                    tagEl.textContent='動態 WebP';
+                } else if(anim && anim.frames && anim.frames.length){
+                    // 逐格 PNG：以 animation_duration 均分播放，循環
+                    const frames=anim.frames; const dur=(cfg.d||3)*1000;
+                    const iv=Math.max(40, dur/frames.length); let i=0;
+                    media.src=frames[0]; tagEl.textContent='逐格動畫 ('+frames.length+'格)';
+                    _frameTimer=setInterval(()=>{ i=(i+1)%frames.length; media.src=frames[i]; }, iv);
+                } else if(anim && anim.img){
+                    media.src=anim.img; tagEl.textContent='靜態圖';
+                } else {
+                    media.src=fallbackIcon||''; tagEl.textContent = cfg?'無可播放的動畫':'此禮物不在設定檔中';
+                }
+            };
+            window.__fxReplay = render;
+            render();
+            ov.classList.add('show');
+        }
+        document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeFx(); });
+        document.getElementById('fx-overlay').addEventListener('click', e=>{ if(e.target.id==='fx-overlay') closeFx(); });
+
         // 初始化
         createSnowflakes();
         setInterval(createSnowflakes, 25000);
         
         // 頁面載入時獲取資料
-        window.addEventListener('load', fetchGifts);
+        window.addEventListener('load', () => { loadGiftAnim(); fetchGifts(); });
     </script>
 </body>
 </html>
