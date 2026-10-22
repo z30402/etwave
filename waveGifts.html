@@ -14,7 +14,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #202d3e 100%);
+            background: #0F1B25;
             min-height: 100vh;
             color: white;
             overflow-x: hidden;
@@ -22,42 +22,18 @@
         }
 
         /* 雪花效果 */
-        .snowflakes {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
+        /* 星空背景（仿 wave.com.tw 三層視差） */
+        .stars { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
+        .stars i { position: absolute; top: 0; left: 0; border-radius: 50%; background: transparent; box-shadow: var(--sh); }
+        .stars i::after { content: ''; position: absolute; top: 2560px; left: 0; width: inherit; height: inherit; border-radius: 50%; background: transparent; box-shadow: var(--sh); }
+        #stars1 { width: 1px; height: 1px; animation: starScroll 60s linear infinite; }
+        #stars2 { width: 1px; height: 1px; animation: starScroll 120s linear infinite; }
+        #stars3 { width: 2px; height: 2px; animation: starScroll 180s linear infinite; }
+        @keyframes starScroll { from { transform: translateY(0); } to { transform: translateY(-2560px); } }
 
-        .snowflake {
-            position: absolute;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 1em;
-            animation: snowfall 10s linear infinite;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
-            user-select: none;
-            pointer-events: none;
-        }
-
-        @keyframes snowfall {
-            0% {
-                transform: translateY(100vh) translateX(0px) rotate(0deg);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100px) translateX(30px) rotate(360deg);
-                opacity: 0;
-            }
-        }
+        /* 底部波浪（wave.com.tw 的 wave-bg.svg） */
+        .wave-bg { position: fixed; left: 0; bottom: 0; width: 100%; height: 63vh; min-height: 300px; z-index: 0; pointer-events: none; overflow: hidden; }
+        .wave-bg svg { width: 100%; height: 100%; display: block; }
 
         /* 主要內容 */
         .main-content {
@@ -510,8 +486,32 @@
             <button class="fx-replay" onclick="window.__fxReplay&&window.__fxReplay()">重播</button>
         </div>
     </div>
-    <!-- 雪花效果容器 -->
-    <div class="snowflakes" id="snowflakes"></div>
+    <!-- 星空 + 波浪背景（仿 wave.com.tw） -->
+    <div class="stars">
+        <i id="stars1"></i>
+        <i id="stars2"></i>
+        <i id="stars3"></i>
+    </div>
+    <div class="wave-bg">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 627" preserveAspectRatio="xMidYMax slice">
+            <defs>
+                <linearGradient id="wbgA" x1="82.973%" x2="3.856%" y1="54.868%" y2="42.01%">
+                    <stop offset="0%" stop-color="#2C3E50"/>
+                    <stop offset="43.95%" stop-color="#2B5777"/>
+                    <stop offset="100%" stop-color="#2980B9"/>
+                </linearGradient>
+                <linearGradient id="wbgB" x1="84.519%" x2="31.97%" y1="50.892%" y2="43.562%">
+                    <stop offset="0%" stop-color="#3D4E60"/>
+                    <stop offset="62.208%" stop-color="#2B5777"/>
+                    <stop offset="100%" stop-color="#5289AE"/>
+                </linearGradient>
+            </defs>
+            <g fill="none" fill-rule="evenodd">
+                <path fill="url(#wbgA)" d="M428.137 20.327c140.544 72.956 141.545 234.358 244.577 234.358 103.032 0 313.098-340.293 429.134-198.38 116.037 141.914 238.575 224.864 314.599 236.856 50.682 7.995 102.699-35.645 156.049-130.92L1586 634H0l11.007-497.743C195.397 10.333 334.44-28.31 428.137 20.327z" opacity=".145" transform="translate(-11)"/>
+                <path fill="url(#wbgB)" d="M449.137 47.327c140.544 72.956 141.545 234.358 244.577 234.358 103.032 0 313.098-340.293 429.134-198.38C1238.885 225.22 1355 320 1437.447 320.161 1492.41 320.27 1566.596 241.548 1660 84v552H11l21.007-472.743C216.397 37.333 355.44-1.31 449.137 47.327z" opacity=".139" transform="matrix(-1 0 0 1 1660 0)"/>
+            </g>
+        </svg>
+    </div>
 
     <div class="main-content">
         <!-- 頂部導航 -->
@@ -551,20 +551,20 @@
 
     <script>
         // 創建雪花效果
-        function createSnowflakes() {
-            const snowflakesContainer = document.getElementById('snowflakes');
-            const snowflakeSymbols = ['❄', '❅', '❆', '✦', '✧', '⋆'];
-            
-            snowflakesContainer.innerHTML = '';
-            
-            for (let i = 0; i < 30; i++) {
-                const snowflake = document.createElement('div');
-                snowflake.className = 'snowflake';
-                snowflake.innerHTML = snowflakeSymbols[Math.floor(Math.random() * snowflakeSymbols.length)];
-                snowflake.style.left = Math.random() * 100 + '%';
-                snowflake.style.animation = `snowfall ${8 + Math.random() * 7}s linear infinite`;
-                snowflake.style.animationDelay = Math.random() * 5 + 's';
-                snowflakesContainer.appendChild(snowflake);
+        // 三層視差星空（box-shadow 白點，仿 wave.com.tw）
+        function starShadow(count, spread){
+            const s = [];
+            for (let i = 0; i < count; i++){
+                s.push(`${Math.floor(Math.random()*spread)}px ${Math.floor(Math.random()*2560)}px #fff`);
+            }
+            return s.join(',');
+        }
+        function createStars(){
+            const spread = Math.max(window.innerWidth, 1440);
+            const map = { stars1: 600, stars2: 180, stars3: 80 };
+            for (const [id, n] of Object.entries(map)){
+                const el = document.getElementById(id);
+                if (el) el.style.setProperty('--sh', starShadow(n, spread));
             }
         }
 
@@ -831,8 +831,7 @@
         document.getElementById('fx-overlay').addEventListener('click', e=>{ if(e.target.id==='fx-overlay') closeFx(); });
 
         // 初始化
-        createSnowflakes();
-        setInterval(createSnowflakes, 25000);
+        createStars();
         
         // 頁面載入時獲取資料
         window.addEventListener('load', () => { loadGiftAnim(); fetchGifts(); });
