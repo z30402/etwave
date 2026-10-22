@@ -364,6 +364,10 @@
       color: #fff; font-weight: 700; font-size: 0.9rem;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+    .pill-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .pill-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .pill-stats { display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,0.85); font-size: 0.72rem; }
+    .pill-stats i { opacity: .85; margin-right: 2px; }
     .pill-level {
       flex-shrink: 0; background: linear-gradient(135deg,#3ddc84,#2ecc71);
       color: #fff; font-weight: 700; font-size: 0.78rem; line-height: 1;
@@ -765,6 +769,8 @@
               backImage: live.streamer.avatar_url || live.streamer.avatar_url,
               waveLive: `https://wave.com.tw/lives/${live.id}`,
               viewers: live.now_viewer_count || 0,
+              likes: live.like_count || 0,
+              stars: live.revenue_point || 0,
               category: getCategoryName(live.category_info),
               flvUrl: flvUrl, // 儲存 FLV 播放地址
               backgroundImage: live.background_image_url || live.streamer.avatar_url // 背景圖片
@@ -814,8 +820,17 @@
               <div class="header-left">
                 <div class="streamer-pill">
                   <img src="${live.image}" alt="${live.name}" class="pill-avatar" onerror="this.style.display='none'">
-                  <span class="pill-name">${live.name}</span>
-                  ${live.level ? `<span class="pill-level">${live.level}</span>` : ''}
+                  <div class="pill-info">
+                    <div class="pill-top">
+                      <span class="pill-name">${live.name}</span>
+                      ${live.level ? `<span class="pill-level">${live.level}</span>` : ''}
+                    </div>
+                    <div class="pill-stats">
+                      <span><i class="fas fa-headphones"></i> ${Number(live.viewers||0).toLocaleString('en-US')}</span>
+                      <span><i class="fas fa-heart"></i> ${Number(live.likes||0).toLocaleString('en-US')}</span>
+                      <span><i class="fas fa-star"></i> ${Number(live.stars||0).toLocaleString('en-US')}</span>
+                    </div>
+                  </div>
                 </div>
                 <div class="title-pill"><i class="fas fa-comment-dots"></i><span>${live.title}</span></div>
               </div>
