@@ -354,7 +354,7 @@
     /* 左上主播藥丸標頭（頭像＋名稱＋等級） */
     .streamer-pill {
       display: inline-flex; align-items: center; gap: 10px;
-      background: rgba(0,0,0,0.38); backdrop-filter: blur(8px);
+      background: rgba(90,90,90,0.42); backdrop-filter: blur(8px);
       border-radius: 999px; padding: 6px 14px 6px 6px; max-width: 78%;
     }
     .pill-avatar {
@@ -370,6 +370,17 @@
       color: #fff; font-weight: 700; font-size: 0.78rem; line-height: 1;
       padding: 3px 8px; border-radius: 7px; box-shadow: 0 2px 6px rgba(0,0,0,0.25);
     }
+
+    /* 左上直欄：主播膠囊 + 標題膠囊 */
+    .header-left { display: flex; flex-direction: column; gap: 8px; max-width: 80%; }
+    .title-pill {
+      display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; max-width: 100%;
+      background: linear-gradient(90deg, rgba(120,120,120,0.5), rgba(55,55,55,0.3));
+      backdrop-filter: blur(8px); border-radius: 999px; padding: 8px 16px;
+      color: #fff; font-size: 0.95rem;
+    }
+    .title-pill i { opacity: .9; font-size: .9rem; flex-shrink: 0; }
+    .title-pill span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     .close-btn {
       background: rgba(0,0,0,0.5);
@@ -801,10 +812,13 @@
           <div class="player-overlay"></div>
           <div class="player-content">
             <div class="player-header">
-              <div class="streamer-pill">
-                <img src="${live.image}" alt="${live.name}" class="pill-avatar" onerror="this.style.display='none'">
-                <span class="pill-name">${live.name}</span>
-                ${live.level ? `<span class="pill-level">${live.level}</span>` : ''}
+              <div class="header-left">
+                <div class="streamer-pill">
+                  <img src="${live.image}" alt="${live.name}" class="pill-avatar" onerror="this.style.display='none'">
+                  <span class="pill-name">${live.name}</span>
+                  ${live.level ? `<span class="pill-level">${live.level}</span>` : ''}
+                </div>
+                <div class="title-pill"><i class="fas fa-comment-dots"></i><span>${live.title}</span></div>
               </div>
               <button class="close-btn" onclick="closeVideoPlayer()">
                 <i class="fas fa-times"></i>
