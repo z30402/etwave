@@ -1,0 +1,8 @@
+# 反編譯產物與參考碼（本機保留，不上傳）
+reference/
+wave_analysis/
+**/.tools/
+
+# 系統/編輯器
+.DS_Store
+*.bak
